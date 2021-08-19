@@ -4,32 +4,43 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using NLog.Web;
+using Serilog;
+using Serilog.Formatting.Json;
 
 namespace logging
 {
     public class Program
     {
+        public static IConfiguration Configuration { get; } = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddEnvironmentVariables()
+            .Build();
+
         public static void Main(string[] args)
         {
-            var logger = NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(Configuration)
+                .WriteTo.File(new JsonFormatter(), @".\logs\serilog.json")
+                .CreateLogger();
 
             try
             {
-                logger.Info("Starting web host...");
+                Log.Information("Starting web host...");
                 CreateHostBuilder(args).Build().Run();
-                logger.Info("Started web host...");
+                Log.Information("Started web host...");
             }
             catch (Exception exception)
             {
-                logger.Error(exception, "Host terminated unexpectedly");
+                Log.Fatal(exception, "Host terminated unexpectedly");
                 throw;
             }
             finally
             {
-                NLog.LogManager.Shutdown();
+                Log.CloseAndFlush();
             }
         }
 
@@ -39,11 +50,6 @@ namespace logging
                 {
                     webBuilder.UseStartup<Startup>();
                 })
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                    logging.SetMinimumLevel(LogLevel.Information);
-                })
-                .UseNLog();
+                .UseSerilog();
     }
 }
