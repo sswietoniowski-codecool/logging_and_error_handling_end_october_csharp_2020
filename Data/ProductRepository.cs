@@ -48,7 +48,7 @@ namespace logging.Data
             {
                 _logger.LogError(DataEvents.GetAllProducts, $"{nameof(GetAllProducts)}: Unable to retrieve all products");
 
-                return new List<Product>();
+                throw new Exception("ERROR: Unable to retrieve all products");
             }
         }
     }
