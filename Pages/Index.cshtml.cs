@@ -19,7 +19,7 @@ namespace logging.Pages
 
         public void OnGet()
         {
-            _logger.Log(LogLevel.Information, "Called OnGet method...");
+            _logger.LogInformation("Called OnGet method...");
         }
     }
 }
