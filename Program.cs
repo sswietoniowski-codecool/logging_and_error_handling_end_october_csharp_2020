@@ -50,6 +50,11 @@ namespace logging
                 {
                     webBuilder.UseStartup<Startup>();
                 })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.SetMinimumLevel(LogLevel.Information);
+                })
                 .UseSerilog();
     }
 }
