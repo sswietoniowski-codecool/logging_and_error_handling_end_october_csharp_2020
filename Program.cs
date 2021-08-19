@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using NLog.Web;
 
 namespace logging
 {
@@ -13,7 +14,23 @@ namespace logging
     {
         public static void Main(string[] args)
         {
-            CreateHostBuilder(args).Build().Run();
+            var logger = NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+
+            try
+            {
+                logger.Info("Starting web host...");
+                CreateHostBuilder(args).Build().Run();
+                logger.Info("Started web host...");
+            }
+            catch (Exception exception)
+            {
+                logger.Error(exception, "Host terminated unexpectedly");
+                throw;
+            }
+            finally
+            {
+                NLog.LogManager.Shutdown();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -21,6 +38,12 @@ namespace logging
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-                });
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.ClearProviders();
+                    logging.SetMinimumLevel(LogLevel.Information);
+                })
+                .UseNLog();
     }
 }
